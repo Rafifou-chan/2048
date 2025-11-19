@@ -13,24 +13,22 @@ int tableau[n][n];
 
 // fonction qui nettoie le terrain de jeu
 void clean(int tableau[n][n]) {
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
             tableau[i][j] = 0;
+        }
+    }
 }
 
 //fonction qui affiche le terrain de jeu
-void afficher(int tableau[n][n])
-{
-    // Ligne du haut
-    printf("┌────");
+void afficher(int tableau[n][n]){
+    printf("┌────");        // Ligne du haut
     for (int j = 1; j < n; j++) printf("┬────");
     printf("┐\n");
 
-    for (int i = 0; i < n; i++)
-    {
+    for (int i = 0; i < n; i++){
         // Contenu des cases
-        for (int j = 0; j < n; j++)
-        {
+        for (int j = 0; j < n; j++){
             int val = tableau[i][j];
 
             if (val == 0) {
@@ -58,6 +56,7 @@ void afficher(int tableau[n][n])
                     default:
                         printf("│ \033[1;37m%2d\033[0m ", val);
                         break;
+                    // Faut ajouter + de coleurs (jusqu'a AU MOINS 2048 et reparer l'equart vu que a partir de 3 digits ca glitch)
                 }
             }
         }
@@ -73,7 +72,9 @@ void afficher(int tableau[n][n])
 
     // Ligne du bas
     printf("└────");
-    for (int j = 1; j < n; j++) printf("┴────");
+    for (int j = 1; j < n; j++) {
+        printf("┴────");
+    }
     printf("┘\n");
 }
 
@@ -83,9 +84,11 @@ int deplacementgauche(int tableau[n][n]) {
     int changed = 0;
 
     // copie du tableau avant déplacement
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
             old[i][j] = tableau[i][j];
+        }
+    }
 
     // ----- génération du nouveau tableau (déplacement vers la gauche) -----
     for (int i = 0; i < n; i++) {             // parcourir chaque ligne
@@ -105,20 +108,25 @@ int deplacementgauche(int tableau[n][n]) {
         }
     }
 
-    // ----- vérifier les changements -----
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            if (old[i][j] != tableau[i][j])
+    //compare
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
+            if (old[i][j] != tableau[i][j]){
                 changed = 1;
+            }
+        }
+    }
 
     // si aucun changement alors retour arrière et message d'erreur
     if (!changed) {
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
+        for (int i = 0; i < n; i++){
+            for (int j = 0; j < n; j++){
                 tableau[i][j] = old[i][j];
+            }
+        }
 
         printf("deplacement invalide\n");
-        return 0;               // déplacement raté
+        return 0;               // déplacement invalide
     }
 
     return 1;                   // déplacement valide
@@ -130,13 +138,15 @@ int deplacementdroite(int tableau[n][n]) {
     int changed = 0;
 
     // copie du tableau avant déplacement
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
             old[i][j] = tableau[i][j];
+        }
+    }
 
-    // ----- génération du nouveau tableau (déplacement vers la droite) -----
-    for (int i = 0; i < n; i++) {              // parcourir chaque ligne
-        for (int j = n - 2; j >= 0; j--) {     // on part de l'avant-dernier vers la droite
+    // simmulation de deplacement
+    for (int i = 0; i < n; i++) {
+        for (int j = n - 2; j >= 0; j--) {
             if (tableau[i][j] != 0) {
                 int k = j;
                 while (k < n - 1 && tableau[i][k + 1] == 0) {
@@ -152,17 +162,22 @@ int deplacementdroite(int tableau[n][n]) {
         }
     }
 
-    // ----- vérifier les changements -----
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            if (old[i][j] != tableau[i][j])
+    // compare
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
+            if (old[i][j] != tableau[i][j]){
                 changed = 1;
+            }
+        }
+    }
 
     // si aucun changement alors retour arrière et message d'erreur
     if (!changed) {
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
+        for (int i = 0; i < n; i++){
+            for (int j = 0; j < n; j++){
                 tableau[i][j] = old[i][j];
+            }
+        }
 
         printf("deplacement invalide\n");
         return 0;               // déplacement raté
@@ -177,11 +192,13 @@ int deplacementhaut(int tableau[n][n]) {
     int changed = 0;
 
     // copie du tableau avant déplacement
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
             old[i][j] = tableau[i][j];
+        }
+    }
 
-    // ----- génération du nouveau tableau (déplacement vers le haut) -----
+    // simulation
     for (int j = 0; j < n; j++) {              // parcourir chaque colonne
         for (int i = 1; i < n; i++) {          // on part d'en bas vers le haut
             if (tableau[i][j] != 0) {
@@ -199,7 +216,7 @@ int deplacementhaut(int tableau[n][n]) {
         }
     }
 
-    // ----- vérifier les changements -----
+    // compare
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             if (old[i][j] != tableau[i][j]){
@@ -254,16 +271,21 @@ int deplacementbas(int tableau[n][n]) {
     }
 
     // comparer avec l'ancien tableau
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            if (old[i][j] != tableau[i][j])
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
+            if (old[i][j] != tableau[i][j]){
                 changed = 1;
+            }
+        }
+    }
 
     // si aucun changement, retour arrière
     if (!changed) {
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
+        for (int i = 0; i < n; i++){
+            for (int j = 0; j < n; j++){
                 tableau[i][j] = old[i][j];
+            }
+        }
 
         printf("deplacement invalide\n");
         return 0;
