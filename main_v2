@@ -2,17 +2,23 @@
 #include <time.h>
 #include <stdlib.h>
 #include <conio.h>
+#include <unistd.h>
 #include <windows.h>
 #ifdef _WIN32
-#include <windows.h>
-#include <conio.h>
 #endif
-#define n 4
 int jeuencourt = 0;
-int tableau[n][n];
+int n;
+int **tableau;
+int gamemode = 0;
+
+void generetableau() {
+    tableau = malloc(n * sizeof(int*));
+    for (int i = 0; i < n; i++)
+        tableau[i] = malloc(n * sizeof(int));
+}
 
 // fonction qui nettoie le terrain de jeu
-void clean(int tableau[n][n]) {
+void clean(int **tableau) {
     for (int i = 0; i < n; i++){
         for (int j = 0; j < n; j++){
             tableau[i][j] = 0;
@@ -20,67 +26,153 @@ void clean(int tableau[n][n]) {
     }
 }
 
-//fonction qui affiche le terrain de jeu
-void afficher(int tableau[n][n]){
-    printf("┌────");        // Ligne du haut
-    for (int j = 1; j < n; j++) printf("┬────");
+    // Fonction qui affiche le terrain de jeu
+void afficher(int **tableau){
+        // Efface l'écran (Code ANSI pour éviter le scintillement de system("cls"))
+        printf("\033[H\033[J");
+
+        printf("┌─────");        // Ligne du haut
+        for (int j = 1; j < n; j++) printf("┬─────");
+        printf("┐\n");
+
+        for (int i = 0; i < n; i++){
+            // Contenu des cases
+            for (int j = 0; j < n; j++){
+                int val = tableau[i][j];
+
+                if (val == 0) {
+                    printf("│     ");
+                } else {
+                    // Utilisation de %5d pour que le nombre prenne toujours 5 espaces
+                    // Cela empêche le tableau de se décaler quand les nombres grandissent
+                    switch(val) {
+                        case 2:    printf("│\033[97m%5d\033[0m", val); break; // Blanc brillant
+                        case 4:    printf("│\033[37m%5d\033[0m", val); break; // Gris
+                        case 8:    printf("│\033[93m%5d\033[0m", val); break; // Jaune brillant
+                        case 16:   printf("│\033[33m%5d\033[0m", val); break; // Jaune foncé
+                        case 32:   printf("│\033[91m%5d\033[0m", val); break; // Rouge brillant
+                        case 64:   printf("│\033[31m%5d\033[0m", val); break; // Rouge foncé
+                        case 128:  printf("│\033[95m%5d\033[0m", val); break; // Magenta brillant
+                        case 256:  printf("│\033[35m%5d\033[0m", val); break; // Magenta
+                        case 512:  printf("│\033[34m%5d\033[0m", val); break; // Bleu foncé
+                        case 1024: printf("│\033[94m%5d\033[0m", val); break; // Bleu brillant
+                        case 2048: printf("│\033[36m%5d\033[0m", val); break; // Cyan
+                        case 4096: printf("│\033[96m%5d\033[0m", val); break; // Cyan brillant
+                        case 8192: printf("│\033[92m%5d\033[0m", val); break; // Vert brillant
+                        default:   printf("│\033[32m%5d\033[0m", val); break; // Vert (pour les très gros nombres)
+                    }
+                }
+            }
+            printf("│\n");
+
+            // Séparateur entre les lignes
+            if (i < n - 1) {
+                printf("├─────");
+                for (int j = 1; j < n; j++) printf("┼─────");
+                printf("┤\n");
+            }
+        }
+
+        // Ligne du bas
+        printf("└─────");
+        for (int j = 1; j < n; j++) {
+            printf("┴─────");
+        }
+        printf("┘\n");
+        printf("Z (Haut), Q (Gauche), S (Bas), D (Droite)\n");
+}
+
+void afficher_double(int **tableau1, int **tableau2) {
+    // Efface l'écran
+    printf("\033[H\033[J");
+
+    // Ligne du haut
+    printf("┌─────");
+    for (int j = 1; j < n; j++) printf("┬─────");
+    printf("┐    ");     // espace entre les deux tableaux
+    printf("┌─────");
+    for (int j = 1; j < n; j++) printf("┬─────");
     printf("┐\n");
 
-    for (int i = 0; i < n; i++){
-        // Contenu des cases
-        for (int j = 0; j < n; j++){
-            int val = tableau[i][j];
+    for (int i = 0; i < n; i++) {
 
-            if (val == 0) {
-                printf("│    ");
-            } else {
+        // ----- LIGNE CONTENU TABLEAU 1 -----
+        for (int j = 0; j < n; j++) {
+            int val = tableau1[i][j];
+            if (val == 0)
+                printf("│     ");
+            else {
                 switch(val) {
-                    case 2:
-                        printf("│ \033[32m%2d\033[0m ", val);
-                        break;
-                    case 4:
-                        printf("│ \033[33m%2d\033[0m ", val);
-                        break;
-                    case 8:
-                        printf("│ \033[31m%2d\033[0m ", val);
-                        break;
-                    case 16:
-                        printf("│ \033[36m%2d\033[0m ", val);
-                        break;
-                    case 32:
-                        printf("│ \033[35m%2d\033[0m ", val);
-                        break;
-                    case 64:
-                        printf("│ \033[34m%2d\033[0m ", val);
-                        break;
-                    default:
-                        printf("│ \033[1;37m%2d\033[0m ", val);
-                        break;
-                    // Faut ajouter + de coleurs (jusqu'a AU MOINS 2048 et reparer l'equart vu que a partir de 3 digits ca glitch)
+                    case 2:    printf("│\033[97m%5d\033[0m", val); break;
+                    case 4:    printf("│\033[37m%5d\033[0m", val); break;
+                    case 8:    printf("│\033[93m%5d\033[0m", val); break;
+                    case 16:   printf("│\033[33m%5d\033[0m", val); break;
+                    case 32:   printf("│\033[91m%5d\033[0m", val); break;
+                    case 64:   printf("│\033[31m%5d\033[0m", val); break;
+                    case 128:  printf("│\033[95m%5d\033[0m", val); break;
+                    case 256:  printf("│\033[35m%5d\033[0m", val); break;
+                    case 512:  printf("│\033[34m%5d\033[0m", val); break;
+                    case 1024: printf("│\033[94m%5d\033[0m", val); break;
+                    case 2048: printf("│\033[36m%5d\033[0m", val); break;
+                    case 4096: printf("│\033[96m%5d\033[0m", val); break;
+                    case 8192: printf("│\033[92m%5d\033[0m", val); break;
+                    default:   printf("│\033[32m%5d\033[0m", val); break;
+                }
+            }
+        }
+        printf("│    ");
+
+        // ----- LIGNE CONTENU TABLEAU 2 -----
+        for (int j = 0; j < n; j++) {
+            int val = tableau2[i][j];
+            if (val == 0)
+                printf("│     ");
+            else {
+                switch(val) {
+                    case 2:    printf("│\033[97m%5d\033[0m", val); break;
+                    case 4:    printf("│\033[37m%5d\033[0m", val); break;
+                    case 8:    printf("│\033[93m%5d\033[0m", val); break;
+                    case 16:   printf("│\033[33m%5d\033[0m", val); break;
+                    case 32:   printf("│\033[91m%5d\033[0m", val); break;
+                    case 64:   printf("│\033[31m%5d\033[0m", val); break;
+                    case 128:  printf("│\033[95m%5d\033[0m", val); break;
+                    case 256:  printf("│\033[35m%5d\033[0m", val); break;
+                    case 512:  printf("│\033[34m%5d\033[0m", val); break;
+                    case 1024: printf("│\033[94m%5d\033[0m", val); break;
+                    case 2048: printf("│\033[36m%5d\033[0m", val); break;
+                    case 4096: printf("│\033[96m%5d\033[0m", val); break;
+                    case 8192: printf("│\033[92m%5d\033[0m", val); break;
+                    default:   printf("│\033[32m%5d\033[0m", val); break;
                 }
             }
         }
         printf("│\n");
 
-        // Séparateur entre les lignes
+        // Lignes séparatrices
         if (i < n - 1) {
-            printf("├────");
-            for (int j = 1; j < n; j++) printf("┼────");
+            printf("├─────");
+            for (int j = 1; j < n; j++) printf("┼─────");
+            printf("┤    ");
+            printf("├─────");
+            for (int j = 1; j < n; j++) printf("┼─────");
             printf("┤\n");
         }
     }
 
     // Ligne du bas
-    printf("└────");
-    for (int j = 1; j < n; j++) {
-        printf("┴────");
-    }
+    printf("└─────");
+    for (int j = 1; j < n; j++) printf("┴─────");
+    printf("┘    ");
+    printf("└─────");
+    for (int j = 1; j < n; j++) printf("┴─────");
     printf("┘\n");
 }
 
 // fonction qui gère le déplacement vers la gauche
-int deplacementgauche(int tableau[n][n]) {
-    int old[n][n];
+int deplacementgauche(int **tableau) {
+    int **old = malloc(n * sizeof(int*));
+    for (int i = 0; i < n; i++)
+        old[i] = malloc(n * sizeof(int));
     int changed = 0;
 
     // copie du tableau avant déplacement
@@ -128,13 +220,17 @@ int deplacementgauche(int tableau[n][n]) {
         printf("deplacement invalide\n");
         return 0;               // déplacement invalide
     }
-
+    for (int i = 0; i < n; i++)
+        free(old[i]);
+    free(old);
     return 1;                   // déplacement valide
 }
 
 // fonction qui gère le déplacement vers la droite
-int deplacementdroite(int tableau[n][n]) {
-    int old[n][n];
+int deplacementdroite(int **tableau) {
+    int **old = malloc(n * sizeof(int*));
+    for (int i = 0; i < n; i++)
+        old[i] = malloc(n * sizeof(int));
     int changed = 0;
 
     // copie du tableau avant déplacement
@@ -187,8 +283,10 @@ int deplacementdroite(int tableau[n][n]) {
 }
 
 // fonction qui gère le déplacement vers le haut
-int deplacementhaut(int tableau[n][n]) {
-    int old[n][n];
+int deplacementhaut(int **tableau) {
+    int **old = malloc(n * sizeof(int*));
+    for (int i = 0; i < n; i++)
+        old[i] = malloc(n * sizeof(int));
     int changed = 0;
 
     // copie du tableau avant déplacement
@@ -236,13 +334,17 @@ int deplacementhaut(int tableau[n][n]) {
         printf("deplacement invalide\n");
         return 0;               // déplacement raté
     }
-
+    for (int i = 0; i < n; i++)
+        free(old[i]);
+    free(old);
     return 1;                   // déplacement valide
 }
 
 // fonction qui gère le déplacement vers le bas
-int deplacementbas(int tableau[n][n]) {
-    int old[n][n];
+int deplacementbas(int **tableau) {
+    int **old = malloc(n * sizeof(int*));
+    for (int i = 0; i < n; i++)
+        old[i] = malloc(n * sizeof(int));
     int changed = 0;
 
     // copie du tableau
@@ -261,7 +363,7 @@ int deplacementbas(int tableau[n][n]) {
                     tableau[k][j] = 0;
                     k++;
                 }
-                // fusion si case en dessous a la même valeur et n'a pas déjà fusionné
+                // fusion si case en dessous à la même valeur et n'a pas déjà fusionné
                 if (k < n - 1 && tableau[k + 1][j] == tableau[k][j]) {
                     tableau[k + 1][j] *= 2;
                     tableau[k][j] = 0;
@@ -290,13 +392,20 @@ int deplacementbas(int tableau[n][n]) {
         printf("deplacement invalide\n");
         return 0;
     }
-
+    for (int i = 0; i < n; i++)
+        free(old[i]);
+    free(old);
     return 1;
 }
 
 //fonction pour recuperer les direction joueurs
-int input(int tableau[n][n]) {
-    char c = getchar();
+int input(int **tableau) {
+    char c;
+
+    // Lire le prochain caractère non '\n'
+    do {
+        scanf("%c",&c);
+    } while (c == '\n');
 
     switch(c) {
         case 'z':
@@ -307,16 +416,30 @@ int input(int tableau[n][n]) {
             return deplacementgauche(tableau);
         case 'd':
             return deplacementdroite(tableau);
+        default:
+            ;
     }
 
-    return 0;
+    return 0; // Aucun déplacement valide
 }
 
 
 // fonction qui génère les petits blocs
-void generer(int tableau[n][n]) {
+void generer(int **tableau) {
     int x = rand() % n;
     int y = rand() % n;
+
+    // Sécurité pour ne pas boucler à l'infini si le tableau est plein
+    int emptyCheck = 0;
+    for(int i=0; i<n; i++) {
+        for(int j=0; j<n; j++) {
+            if(tableau[i][j] == 0) {
+                emptyCheck++;
+            }
+        }
+    }
+    if(emptyCheck == 0) return;
+
     while (tableau[x][y] != 0) {  // ne place que sur une case vide
         x = rand() % n;
         y = rand() % n;
@@ -328,7 +451,7 @@ void generer(int tableau[n][n]) {
     }
 }
 
-//fonction pour verifier qu'il y ai toujours une option de mouvement
+//fonction pour verifier qu'il y est toujours une option de mouvement
 void Verifier() {
     int checklist = 0;
 
@@ -376,11 +499,67 @@ void Verifier() {
     }
 }
 
+void Start(){
+    printf(
+"                                          ,---.-,    \n"
+"                                   ,--,  '   ,'  '.  \n"
+"      ,----,     ,----..         ,--.'| /   /      \\ \n"
+"    .'   .' \\   /   /   \\     ,--,  | :.   ;  ,/.  : \n"
+"  ,----,'    | /   .     : ,---.'|  : ''   |  | :  ; \n"
+"  |    :  .  ;.   /   ;.  \\;   : |  | ;'   |  ./   : \n"
+"  ;    |.'  /.   ;   /  ` ;|   | : _' ||   :       , \n"
+"  `----'/  ; ;   |  ; \\ ; |:   : |.'  | \\   \\     /  \n"
+"    /  ;  /  |   :  | ; | '|   ' '  ; :  ;   ,   '\\  \n"
+"   ;  /  /-, .   |  ' ' ' :\\   \\  .'. | /   /      \\ \n"
+"  /  /  /.`| '   ;  \\; /  | `---`:  | '.   ;  ,/.  : \n"
+"./__;      :  \\   \\  ',  /       '  ; |'   |  | :  ; \n"
+"|   :    .'    ;   :    /        |  : ;'   |  ./   : \n"
+";   | .'        \\   \\ .'         '  ,/ |   :      /  \n"
+"`---'            `---`           '--'   \\   \\   .'   \n"
+"                                         `---`-'      \n"
+    );
+    printf("\n\n===== | Selectionnez votre mode de jeu |=====\n\n1 : Classic (de 4 par 4 a 9 par 9)\n2 : Duo, deux tableaux\n3 : Terrain fantaisie\n");
+    scanf("%d",&gamemode);
+    while (getchar() != '\n');   // vide le buffer clavier
+    if (gamemode == 1) {
+        do{
+            printf("\nTaille du tableau : ");
+            scanf("%d", &n);
+            if (n<4) printf("\nTerrain trop petit");
+            if (n>9) printf("\nTerrain trop grand");
+        } while (n<4 || n>9);
+        while (getchar() != '\n');   // vide le buffer clavier
+        generetableau();
+        clean(tableau);
+        generer(tableau);
+        generer(tableau);
+        afficher(tableau); //lancer le jeu
+        jeuencourt = 1;
+        do {
+            int moved = input(tableau);
 
+            if (moved)
+                generer(tableau);   // on ajoute un bloc uniquement si déplacements valides
+
+            afficher(tableau);
+            Verifier();
+
+        } while (jeuencourt == 1);
+    }
+    if (gamemode == 2) {
+        printf("pas fini");
+    }
+    if (gamemode == 3) {
+        printf("pas fini");
+    }
+    else {
+        printf("Mode de jeu invalide invalide, ");
+        Start();
+    }
+}
 
 int main() {
-
-    #ifdef _WIN32 //pour afficher correctement dans le terminale les couleures
+    #ifdef _WIN32 //pour afficher correctement dans le terminal les couleurs
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD mode = 0;
     GetConsoleMode(hConsole, &mode);
@@ -389,23 +568,8 @@ int main() {
     SetConsoleOutputCP(CP_UTF8); // pour afficher correctement les caracteres speciaux (le tableau)
     SetConsoleCP(CP_UTF8);
 
-    srand(time(NULL)); // preparer l'aleatoire et le tableau
-    clean(tableau);
-    generer(tableau);
-    generer(tableau);
-    afficher(tableau); //lancer le jeu
-    jeuencourt = 1;
-    do {
-        int moved = input(tableau);
-
-        if (moved)
-            generer(tableau);   // on ajoute un bloc uniquement si déplacements valides
-
-        afficher(tableau);
-        Verifier();
-
-    } while (jeuencourt == 1);
-
+    srand(time(NULL)); // preparer l'aléatoire et le tableau
+    Start();
 
     return 0;
 }
