@@ -1,0 +1,27 @@
+Livrable IF2B
+
+Classic
+Pour débuter le projet nous nous sommes directement penchés sur le mode de jeu classique en espérant qu’il soit le plus simple. Malgré avoir vu comme utiliser malloc en cours nous espérions pouvoir travailler sans pour rendre le code global plus simple à comprendre, chose qui nous a vite été impossible du a la nature du premier mode de jeu qui requière un tableau dynamique nous avons du nous y résoudre, rendant la compréhension a la lecture plus dure et nous forçant ensuite a créer des fonction pour dé-allouer cet espace dans le cas ou on relance le jeu pour ne pas risquer perdre de la place à chaque répétition, sachant que certains de nos ordinateurs portable utilisés pour le code ne supportaient presque déjà plus juste Clion une fois que le code a dépassé les 500 lignes, nous avons essayé d’optimiser le plus possible avec nos connaissances le Projet.
+
+Un autre aspect qui nous a volé un temps précieux était notre envie de rester dans le terminal pour des raison d’esthétique, on aime bien l’effet rustique et authentique qui émane des jeux entièrement dans une interface textuelle. Cependant le texte blanc monotone ne nous donnais pas de quoi être fier donc dès le début de l’affichage nous avons fait deux choix esthétiques. Tout d’abord nous utilisons 
+’’’ (lignes 1184-1888)
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+DWORD mode = 0;
+GetConsoleMode(hConsole, &mode);
+SetConsoleMode(hConsole, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+’’’
+Qui sont une préparation du Terminal pour nous offrir justement la possibilité de le rendre plus attrayant. Il nous permet de faire un tableau en caractères spéciaux ainsi que de donner des couleurs à nos nombres pour mieux les différencier. Nous avons ensuite utilisé des générateurs de dessins en ASCII pour créer un titre avec cet effet vintage qui se marrie bien avec le fait que le jeu soit uniquement textuel dans le terminal. Le code entier étant modulable le code pour justement gérer ce tableau de caractères spéciaux est imposant a lui-même, mais ayant au centre en plus un énorme bloc de code pour gérer les couleurs potentiels des nombres qu’il contient, ce bout de code est très simple a repérer, il commence ligne 99
+De plus nous espérions réussir à « laver » le terminal avant les affichages pour éviter qu’il y ai trop d’information simultanément a l’écran mais il ne marche que sur certaines machines du a la tendance qu’a le « c » a ne marcher que dans certains cas
+En l’occurrence le code est 
+’’’
+void clear_screen() {
+    printf("\033[2J\033[H");
+    fflush(stdout);
+}
+’’’
+Et qui, selon les gens en lignes de me le fournisse écrit un caractère si grand que le terminal décide de se vider tout seul, laissant le message qui le suis comme seul survivant a l’écran. Malgré la probabilité qu’il ne fonctionne pas nous avons quand même laissé cette fonction car si jamais elle ne fonctionne pas elle ne dérange rien autours d’elle donc autant la garder et espérer.
+Une fois le tableau Malloc généré pour le mode classique, on a fais la fonction qui génère les blocs, qu’on gardera en commun pour les trois code (même s’il a fallu la modifier pour éviter les obstacles plus tard pour le mode de jeu Puzzle) Elle est vraiment très minimaliste : regarder les cases vides, en choisir une au hasard, choisir au hasard (non équiprobable) la valeur entre 2 et 4 et l’ajouter au tableau. Une fois le tableau généré on appel deux fois cette fonction au lancement dans la main.
+Les déplacements eux nous ont donnés bien plus de fils a retordre. En sur réfléchissant à la problématique de la vérification de mouvement effectué nous avons opté pour une solution qui nous était apparue comme la plus simple : créer un autre tableau, y mettre les donnés exactes du premier tableau pour ensuite déplacer les blocs sur le premier tableau et comparer. Si les valeurs étaient les mêmes nous donnions un message d’erreur et nous ne faisions pas apparaitre de nouveau bloc. Au final nous avons juste ajouter une variable changement que l’on indente si nous mergeons ou changeons la valeur de blocs, pour juste voire si cette variable est nulle pour afficher l’erreur.
+Ensuite pour la vérification de mouvement restants, nous avons opter pour une fonction qui d’abord compte les blocs vide pour ne pas avoir à vérifier plus dans le cas ou le jeu est encore a ses débuts. Ensuite s’il n’y a pas de cases vides seulement il va vérifier s’il y a des fusions possibles, arrêtant le jeu s’il est bloqué, appelant dans ce cas la fonction responsable du score et propose de rejouer, ce qui reouvre le menu principale dans le cas d’une reponse positive.
+Pour le calcul des score l’algorythme fais exatcement ce qui est dans l’énnoncé, il compte tout simplement les blocs positif et les additione, j’éexpliquerais plus tard pourquoi spécifiquement positif.
+
